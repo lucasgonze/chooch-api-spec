@@ -1,0 +1,670 @@
+openapi: 3.0.0
+
+info:
+  version: "1.0.0"
+  title: Chooch AI
+  description: 'Visual AI'
+  termsOfService: 'https://chooch.ai/terms/'
+
+externalDocs:
+  url: 'https://chooch.ai/api/'
+
+servers:
+  - url: 'https://api.chooch.ai/'
+    description: Production server
+
+paths:
+
+  /predict/face:
+
+    post:
+      description: >-
+        Add a face image with a unique id (it can be a unique person name, or a unique id assigned to a person):
+
+      parameters:
+        - name: key_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - description: MUST be "insert_person_image_key_id"
+          name: command
+          required: true
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/model_id_required'
+        - $ref: '#/components/parameters/apikey'
+
+      responses:
+        '200':
+          description: Success
+
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_description:
+                    type: string
+                    example: "success"
+                    description: Success or failure of the operation
+                  status:
+                    type: string
+                    example: "41868"
+                    description: |
+                      If status is less than 1, an error has occurred. -1 means no face was detected. -2 means the person ID parameter was invalid. If status is 1 or greater, the value is the image ID.
+                  post_type:
+                    type: string
+                    example: insert_person_image
+
+    get:
+      description: >-
+          Search and tag a face image.
+      parameters:
+        - description: Link to a face image
+          in: query
+          name: url
+          required: true
+          schema:
+            type: string
+        - description: >-
+            If a valid person_id is passed, Chooch will search only in that person’s data. -1 means don’t filter by person. The default is -1. This value is created when training a person in the dashboard.
+          in: query
+          name: person_id_filter
+          required: false
+          schema:
+            type: string
+        - description: ID of the perception that the search will be made on.
+          in: query
+          name: model_id
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/apikey'
+      responses:
+        '200':
+          description: Success
+
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                    description: Success or failure of the operation
+                  person_id_filter:
+                    type: integer
+                    description: Reiterates the person_id value passed as a query parameter
+                    example: -1
+                  faces_detected:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        person_name:
+                          type: string
+                          example: "George Clooney"
+                          description: Name associated with the person as set in the training app
+                        similarity:
+                          type: number
+                          example: 0.8
+                          description: If it is 0.7 or higher it is a guaranteed match. If 0.9 or higher it is probably the same image.
+                        coordinates:
+                          description: Location in format X1, X2, Y1, Y2, in pixels
+                          type: string
+                          example: "248,506,192,450"
+                        image_url:
+                          type: string
+                          example: "https://s3.amazonaws.com/choochdashboard/media/face_models/14/George_Clooney/220px-George_Clooney_2016_(1).jpg"
+                          description: Reiterates image_url query parameter, if set in the request
+                        person_id:
+                          type: integer
+                          example: 22
+                          description: ID associated with the person, first created in the training app.
+                        key_id:
+                          type: integer
+                          example: null
+                          description: Reference ID created by a human, a unique text value associated with a person using the dashboard.
+                  face_recog_hit:
+                    type: boolean
+                    example: true
+                    description: true when there is a match and false when there is no match.
+                  face_count:
+                    type: integer
+                    example: 1
+                    description: How many faces are in the image
+                  post_type:
+                    type: string
+                    example: "face_search"
+                    description: A short description of what you queried on. Reflects command query parameter, but spelling might differ.
+                  faces:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        person_name:
+                          type: string
+                          example: "George Clooney"
+                        similarity:
+                          type: number
+                          example: 0.8
+                        face_live:
+                          type: boolean
+                          example: null
+                          description: Whether image has passed liveness detection. Null means false.
+                        coordinates:
+                          description: Location in format X1, X2, Y1, Y2, in pixels
+                          type: string
+                          example: "248,506,192,450"
+                        person_id:
+                          type: integer
+                          example: 22
+                          description: This value is created manually when training a person in the dashboard.
+                        key_id:
+                          type: string
+                          example: null
+                          description: Unique ID that human provided in dashboard while defining person. Different than person_id, which is created automatically by back end code.
+                        face_live_status_description:
+                          type: string
+                          example: null
+                          description: Human-friendly version of the face_live value.
+                  similar_faces:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        person_name:
+                          type: string
+                          example: "George Clooney"
+                        similarity:
+                          type: number
+                          example: 0.8
+                        coordinates:
+                          description: Location in format X1, X2, Y1, Y2, in pixels
+                          type: string
+                          example: "248,506,192,450"
+                        image_url:
+                          type: string
+                          example: "https://s3.amazonaws.com/choochdashboard/media/face_models/14/George_Clooney/220px-George_Clooney_2016_(1).jpg"
+                        person_id:
+                          type: integer
+                          example: 22
+                          description: This value is created when training a person in the dashboard.
+                        key_id:
+                          type: string
+                          example: null
+                        order:
+                          type: integer
+                          example: 1
+                          description: Reiterates the array position of this item, but is 1-based rather than 0-based
+
+        '401':
+          description: the image was not valid
+
+  /predict/image:
+
+      # future: the current usage of POST should be switched to a GET when the "url" param is present, PUT when the input file is in the request body
+      post:
+        description: Classification and object recognition on non-specific images
+        parameters:
+          - description: Link to an image. If this is not set, the input file must be in the request body.
+            in: query
+            # future: give this a more descriptive name, ideally one which can be standardized as a component
+            name: url
+            required: false
+            example: https://s3.amazonaws.com/choochdashboard/base_site/ronaldo_suit.jpg
+            schema:
+              type: string
+          - $ref: '#/components/parameters/model_id_optional'
+          - $ref: '#/components/parameters/apikey'
+
+        requestBody:
+          $ref: '#/components/requestBodies/filebody'
+
+        responses:
+          '200':
+            description: Success
+            content:
+              application/json:
+                # future: improve usability of this data structure. Very hard to navigate.
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      # future: move this info to HTTP. Having it here is not REST.
+                      # fixme: figure out how to document status messages. See "GENERAL STATUS MESSAGES" for possible values.
+                      type: string
+                      example: "ok"
+                    url: # future: eliminate this to reduce verbosity
+                      description: image URL given in the request
+                      type: string
+                      example: https://s3.amazonaws.com/choochdashboard/base_site/ronaldo_suit.jpg
+                    predictions:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          class_title:
+                            description: name of the class
+                            type: string
+                            example: Cristiano Ronaldo
+                          order:
+                            description: position, ranked by relevance
+                            type: integer
+                            example: 1
+                    texts:
+                        description: text predictions
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: "limited to 15 results"
+                          predictions: # fixme: find out what goes here, given that sample data is empty
+                            type: array # fixme: verify that documentation shows this as empty array
+                            items:
+                              type: object
+                              properties: {}
+                          summary:
+                            description: number of occurrences of each text label
+                            type: array
+                            items:
+                              type: object
+                              properties: {}
+                    objects: # future: rename this to something self-explanatory
+                      type: object
+                      properties:
+                        predictions:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              sub_predictions:
+                                description: Predictions made under dense classification. Objects recognized within the image are pulled out and re-analyzed as if they were standalone images.
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    class_title:
+                                      type: string
+                                      example: "tom ford style"
+                                    order:
+                                      type: integer
+                                      example: 1
+                                      # future: examples of subsequent values of order, IE 2...N
+                              object_title:
+                                type: string
+                                example: "man"
+                              coordinates:
+                                description: Location in format X1, X2, Y1, Y2, in pixels
+                                type: string
+                                example: "248,506,192,450"
+
+                        summary:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              count:
+                                description: The number of times an object or concept appears in an image or a frame
+                                type: string #fixme: is the yaml of an integer in quotes an integer or a string?
+                                example: "1"
+                              object_title:
+                                type: string
+                                example: "tie"
+                    faces:
+                      type: object
+                      properties:
+                        face_count:
+                          description: the number of faces detected
+                          type: integer
+                          example: 1
+                        predictions:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              face_name:
+                                description: Facial recognition name predictions
+                                type: string
+                                example: "Cristiano Ronaldo"
+                              coordinates:
+                                description: Location in format X1, X2, Y1, Y2, in pixels
+                                type: string
+                                example: "248,506,192,450"
+                    predicttype:
+                      description: always "dense"
+                      type: string
+                      example: "dense"
+                    fileid:
+                      description: Unique File ID created for the image. The File ID is to identify the image for future references.
+                      type: string
+                      example: "c2f02758f0dd4b8ab703e26f4d70d7c7"
+
+          '401':
+            description: Input image was not valid
+
+
+  /predict/live_detect/:
+  # note to self: my notes on this endpoint are at
+  # https://docs.google.com/document/d/1xhaJpuIlmo0i9f2OPDnSyJIAt3y5dUmqKFAWrcr46JQ/edit#
+
+      post:
+        description:  The initial post will return a file_id. This will be used to query the status result of the Face Authentication of the video.  a video/stream post API which Authenticates a Face in video based on a reference Face Image. The API takes 2 parameters, a Video Url and an Image Url. Chooch Indexes the video and tries to Authenticate the Face in the video based on the reference face image.
+        parameters:
+          - $ref: '#/components/parameters/video_url'
+          - $ref: '#/components/parameters/image_url'
+          - $ref: '#/components/parameters/apikey'
+
+        responses:
+          '201':
+            description: Created. Use the file_id in the response body to GET /predict/live_detect.
+          '401':
+            description: An input was not valid
+
+      get:
+        description:  Pick up result of earlier POST to same endpoint.
+        parameters:
+          - $ref: '#/components/parameters/apikey'
+          - name: file_id
+            description: file_id value returned by prior POST to same resource
+            in: query
+            required: true
+            schema:
+              type: string
+
+        responses:
+          '200':
+            description: Success
+          '401':
+            description: An input was not valid
+
+
+  /predict/object_detection/:
+    # note: the current usage of POST should be switched to a GET when the "url" param is present, PUT when the input file is in the request body
+    post:
+      description: Find position of the perception within the input
+      parameters:
+        - $ref: '#/components/parameters/url_of_an_image'
+        - $ref: '#/components/parameters/model_id_required'
+        - $ref: '#/components/parameters/apikey'
+
+      requestBody:
+        $ref: '#/components/requestBodies/filebody'
+
+      responses:
+        '200':
+          description: Success
+        '401':
+          description: the image was not valid
+
+  /predict/video:
+    get:
+      # future: this should be POST, since it is very much not idempotent
+      description: Send video to index.
+      parameters:
+        - $ref: '#/components/parameters/apikey'
+        - $ref: '#/components/parameters/video_to_index'
+
+      responses:
+        # future: should be 201 created
+        '200':
+          description: a resource has been created and can be polled until the video has been indexed
+          "content":
+            "application/json":
+              "schema":
+                type: object
+                properties:
+                  url:
+                    # future: get rid of this value. Adds complexity without benefit.
+                    description: URL for the video being indexed. Will be the same as the query parameter.
+                    example: "https://s3.amazonaws.com/choochvideo/51.mp4"
+                    type: string
+                  status:
+                    description: will always be 'Success (Video is being indexed)' if the submit is working
+                    example: "Success (Video is being indexed)"
+                    type: string
+                  predicttype:
+                    description: will always be 'video' for video indexing
+                    type: string
+                    example: "video"
+                  fileid:
+                    description: Can be used to pick up tags for the video from the `/predict/search` endpoint
+                    example: "55de9d9ce1e2469da3a420a7b4de9397"
+                    type: string
+
+        '401':
+          description: An input was not valid
+
+  /predict/search:
+    get:
+      description: After a video has been submitted to /predict/video for indexing, the `fileid` returned by that endpoint can be used to pick up tags for the video.
+      parameters:
+        - $ref: '#/components/parameters/apikey'
+        - name: fileid
+          description: fileid value returned by prior POST to /predict/video
+          in: query
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: Success
+          "content":
+            "application/json":
+              "schema":
+                type: object
+                properties:
+                  fileid:
+                    description: Unique File ID created for the video. The File ID is to identify the indexed video for future reference and searches within the video.
+                    example: "55de9d9ce1e2469da3a420a7b4de9397"
+                    type: string
+                  index_status:
+                    description: Status of video index. When complete the status is "Success (Video Has Been Indexed)". For errors see next section.
+                    example: "Success (Video Has Been Indexed)"
+                    type: string
+                  indexstatus:
+                    description: Status of video index. When complete the status is "Success (Video Has Been Indexed)". For errors see next section.
+                    example: "Success (Video Has Been Indexed)"
+                    type: string
+                  seconds:
+                    description: Each second in the video is indexed. Each item is a second in the video and there are predictions for every second, similar to the image prediction API. Each item has a second and predictions field. Predictions for every second are listed in the predictions field with the class_title and order fields.
+                    type: array
+                    items:
+                      type:  object
+                      properties:
+                        second:
+                          description: which second the element pertains to. This is a 1-based number, not 0-based like an array index.
+                          example: 1
+                          type: integer
+                        texts:
+                          description: labels associated with regions in the frames
+                          type: object
+                          properties:
+                            predictions:
+                              description: Second-by-second breakdown of labels
+                              type: array
+                              items:
+                                description: ''
+                                type: object
+                                properties:
+                                  coordinates:
+                                    description: Location in format X1, X2, Y1, Y2, in pixels
+                                    type: string
+                                    example: "248,506,192,450"
+                                  text_value:
+                                    description: label associated with region
+                                    type: string
+                            status:
+                              description: ''
+                              example: "limited to 15 results"
+                            summary:
+                              description: Counts of appearances of each label across all indexed seconds
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  count:
+                                    description: count of appearances of this label across all indexed seconds
+                                    example: "5"
+                                    type: string
+                                  text_value:
+                                    description: the label being counted up
+                                    example: "ronald"
+                                    type: string
+                        objects:
+                          description: results of object detection
+                          type: object
+                          properties:
+                            predictions:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  sub_predictions:
+                                    description: '' # fixme: fill in from my own knowledge. I know more now than before.
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        class_title:
+                                          type: string
+                                          description: 'text label associated with item'
+                                          example: red dress
+                                        order:
+                                          type: integer
+                                          description: Likelihood of accuracy. High numbers are less accurate.
+                                  object_title:
+                                    description: label
+                                    example: "illustration"
+                                    type: string
+                                  coordinates:
+                                    description: Location in format X1, X2, Y1, Y2, in pixels
+                                    type: string
+                                    example: "248,506,192,450"
+                        predictions:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              class_title:
+                                description: name of the object
+                                example: "cristiano ronaldo"
+                                type: string
+                              order:
+                                description: ordinal position of the prediction, in a 1-based series
+                                example: "1" # future: make this a proper integer
+                                type: string
+                        faces:
+                          description: faces detected in the image
+                          # future: example
+                          type: object
+                          properties:
+                            face_count:
+                              description: number of faces matched in the image
+                              example: 1
+                              type: integer
+                            predictions:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  coordinates:
+                                    description: Location in format X1, X2, Y1, Y2, in pixels
+                                    type: string
+                                    example: "248,506,192,450"
+                                  face_name:
+                                    description: text name associated with the face
+                                    example: "cristiano ronaldo"
+                                    type: string
+
+                    # end of seconds
+                  status:
+                    description: Status of the API request. When successful the status is “Success (Video is being indexed)”. For errors see last section.
+                    example: "Success (Video is being indexed)"
+                    type: string
+                  url:
+                    # future: get rid of this value. Adds complexity without benefit.
+                    description: URL for the video being indexed. Will correspond to the fileid query parameter.
+                    example: "https://s3.amazonaws.com/choochvideo/51.mp4"
+                    type: string
+
+components:
+
+  parameters:
+      # future: consistency in parameter names. Always underscore or never.
+
+    video_to_index:
+      name: url
+      description: URL to a video to index.
+      in: query
+      required: true
+      schema:
+        type: string
+
+    video_url:
+      name: video_url
+      description: Video to search for the image. The haystack, not the needle.
+      in: query
+      required: true
+      schema:
+        type: string
+
+    url_of_an_image:
+      description: Link to an image. If this is not set, the input file must be in the request body.
+      in: query
+      # future: give this a more descriptive name, ideally one which can be standardized as a component
+      name: url
+      required: false
+      schema:
+        type: string
+
+    image_url:
+      name: image_url
+      description: Image to search for in the video. The needle, not the haystack.
+      in: query
+      required: true
+      schema:
+        type: string
+
+    model_id_optional:
+      name: model_id
+      description: Perception ID
+      in: query
+      required: false
+      schema:
+        type: integer
+    model_id_required:
+      name: model_id
+      description: Perception ID
+      in: query
+      required: true
+      schema:
+        type: integer
+
+    apikey:
+      # future: rename api_key
+      name: apikey
+      in: query
+      required: true
+      description: API key
+      schema:
+        type: string
+      example: 346g5717-1sd3-35h6-9104-b8h5c819dn19
+
+  requestBodies:
+    filebody:
+      description: input image to process. If this is not in request body, the `url` query parameter MUST be set.
+      required: false
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              file:
+                type: string
+                format: binary
+
