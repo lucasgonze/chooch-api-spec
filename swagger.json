@@ -2,15 +2,15 @@
   "openapi" : "3.0.0",
   "info" : {
     "version" : "1.0.0",
-    "title" : "Chooch AI",
+    "title" : "Choochoo AI",
     "description" : "Visual AI",
-    "termsOfService" : "https://chooch.ai/terms/"
+    "termsOfService" : "https://choochoo.ai/terms/"
   },
   "externalDocs" : {
-    "url" : "https://chooch.ai/api/"
+    "url" : "https://choochoo.ai/api/"
   },
   "servers" : [ {
-    "url" : "https://api.chooch.ai/",
+    "url" : "https://api.choochoo.ai/",
     "description" : "Production server"
   } ],
   "paths" : {
@@ -77,7 +77,7 @@
             "type" : "string"
           }
         }, {
-          "description" : "If a valid person_id is passed, Chooch will search only in that person’s data. -1 means don’t filter by person. The default is -1. This value is created when training a person in the dashboard.",
+          "description" : "If a valid person_id is passed, Choochoo will search only in that person’s data. -1 means don’t filter by person. The default is -1. This value is created when training a person in the dashboard.",
           "in" : "query",
           "name" : "person_id_filter",
           "required" : false,
@@ -135,7 +135,7 @@
                           },
                           "image_url" : {
                             "type" : "string",
-                            "example" : "https://s3.amazonaws.com/choochdashboard/media/face_models/14/George_Clooney/220px-George_Clooney_2016_(1).jpg",
+                            "example" : "https://s3.amazonaws.com/choochoodashboard/media/face_models/14/George_Clooney/220px-George_Clooney_2016_(1).jpg",
                             "description" : "Reiterates image_url query parameter, if set in the request"
                           },
                           "person_id" : {
@@ -227,7 +227,7 @@
                           },
                           "image_url" : {
                             "type" : "string",
-                            "example" : "https://s3.amazonaws.com/choochdashboard/media/face_models/14/George_Clooney/220px-George_Clooney_2016_(1).jpg"
+                            "example" : "https://s3.amazonaws.com/choochoodashboard/media/face_models/14/George_Clooney/220px-George_Clooney_2016_(1).jpg"
                           },
                           "person_id" : {
                             "type" : "integer",
@@ -265,7 +265,7 @@
           "in" : "query",
           "name" : "url",
           "required" : false,
-          "example" : "https://s3.amazonaws.com/choochdashboard/base_site/ronaldo_suit.jpg",
+          "example" : "https://s3.amazonaws.com/choochoodashboard/base_site/ronaldo_suit.jpg",
           "schema" : {
             "type" : "string"
           }
@@ -292,7 +292,7 @@
                     "url" : {
                       "description" : "image URL given in the request",
                       "type" : "string",
-                      "example" : "https://s3.amazonaws.com/choochdashboard/base_site/ronaldo_suit.jpg"
+                      "example" : "https://s3.amazonaws.com/choochoodashboard/base_site/ronaldo_suit.jpg"
                     },
                     "predictions" : {
                       "type" : "array",
@@ -444,7 +444,7 @@
     },
     "/predict/live_detect/" : {
       "post" : {
-        "description" : "The initial post will return a file_id. This will be used to query the status result of the Face Authentication of the video.  a video/stream post API which Authenticates a Face in video based on a reference Face Image. The API takes 2 parameters, a Video Url and an Image Url. Chooch Indexes the video and tries to Authenticate the Face in the video based on the reference face image.",
+        "description" : "The initial post will return a file_id. This will be used to query the status result of the Face Authentication of the video.  a video/stream post API which Authenticates a Face in video based on a reference Face Image. The API takes 2 parameters, a Video Url and an Image Url. Choochoo Indexes the video and tries to Authenticate the Face in the video based on the reference face image.",
         "parameters" : [ {
           "$ref" : "#/components/parameters/video_url"
         }, {
@@ -525,7 +525,7 @@
                   "properties" : {
                     "url" : {
                       "description" : "URL for the video being indexed. Will be the same as the query parameter.",
-                      "example" : "https://s3.amazonaws.com/choochvideo/51.mp4",
+                      "example" : "https://s3.amazonaws.com/choochoovideo/51.mp4",
                       "type" : "string"
                     },
                     "status" : {
@@ -749,7 +749,7 @@
                     },
                     "url" : {
                       "description" : "URL for the video being indexed. Will correspond to the fileid query parameter.",
-                      "example" : "https://s3.amazonaws.com/choochvideo/51.mp4",
+                      "example" : "https://s3.amazonaws.com/choochoovideo/51.mp4",
                       "type" : "string"
                     }
                   }
